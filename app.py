@@ -2,6 +2,8 @@
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 from datetime import datetime
+from flask import request
+from flask_socketio import join_room, emit
 import logging
 import signal
 import sys
@@ -38,7 +40,8 @@ def handle_join_room(data):
         username = data.get('username', 'Гость')
         room = data.get('room', 'main_chat')
 
-        # Отправляем статус всем в комнате
+        join_room(room)
+
         socketio.emit(
             'status',
             {'msg': f'{username} присоединился к чату'},
@@ -46,16 +49,13 @@ def handle_join_room(data):
         )
 
         socketio.emit('message_history', message_history, to=request.sid)
-
         logger.info(f'{username} успешно вошёл в чат {room}')
     except Exception as e:
         logger.error(f'Ошибка при входе в чат: {e}')
 
-# Отправка сообщений
 @socketio.on('send_message')
 def handle_send_message(data):
     try:
-        # Валидация данных
         if not data or 'username' not in data or 'text' not in data:
             logger.warning(f'Получены некорректные данные: {data}')
             return
@@ -63,7 +63,6 @@ def handle_send_message(data):
         username = data['username']
         text = data['text'].strip()
 
-        # Защита от пустых сообщений
         if not text:
             logger.warning(f'Получена пустая строка от {username}')
             return
@@ -84,13 +83,13 @@ def handle_send_message(data):
 
         logger.info(f'Сообщение добавлено в историю: {message}')
 
+        # ИСПРАВЛЕНИЕ: убираем include_self=False, чтобы отправитель тоже видел своё сообщение
         socketio.emit(
             'new_message',
             message,
-            room=room,
-            include_self=False
+            room=room
         )
-        logger.info(f'Отправляем new_message всем в комнате {room}, кроме отправителя')
+        logger.info(f'Отправляем new_message всем в комнате {room} (включая отправителя)')
     except Exception as e:
         logger.error(f'Ошибка при отправке сообщения: {e}')
 logging.basicConfig(level=logging.INFO)

@@ -2,103 +2,128 @@
 <html>
 <head>
     <title>Messenger</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <!-- Socket.IO client library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>  
+	
     <style>
-        #messages { list-style-type: none; padding: 0; max-height: 400px; overflow-y: auto; }
-        .message { margin: 10px 0; padding: 8px; border-bottom: 1px solid #292929; }
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+        #messages { list-style-type: none; padding: 0; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+        .message { margin: 10px 0; padding: 8px; border-bottom: 1px solid #eee; }
         .username { font-weight: bold; color: #0094c9; }
+        .system-msg { color: #666; font-style: italic; }
+        input, button { padding: 8px; }
+        button { cursor: pointer; background-color: #0094c9; color: white; border: none; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
     </style>
 </head>
-<body>
-    <h1>Мессенджер на Flask + SocketIO</h1>
-    
-    <div>
-        <input type="text" id="username" placeholder="Ваше имя" value="Гость">
-        <button onclick="joinChat()">Войти</button>
-    </div>
-    
-    <ul id="messages"></ul>
-    
-    <div>
-        <input type="text" id="messageInput" placeholder="Введите сообщение..." disabled>
-        <button id="sendButton" onclick="sendMessage()" disabled>Отправить</button>
-    </div>
 
+<body>
+    <h1>Flask + SocketIO Messenger</h1>   
+    <div>
+        <input type="text" id="username" placeholder="Your name" value="Guest">
+        <button onclick="handleJoinClick()">Join Chat</button>
+    </div>  
+    <ul id="messages"></ul>   
+    <div style="margin-top: 15px;">
+        <input type="text" id="messageInput" placeholder="Type a message..." disabled>
+        <button id="sendButton" onclick="handleSendMessage()" disabled>Send</button>
+    </div>
+	
     <script>
         const socket = io();
-
-        socket.on('connect', () => {
-            console.log('Подключено к серверу');
-            joinChat();
-        });
-
-        socket.onAny((eventName, ...args) => {
-            console.log('Получено событие:', eventName, 'данные:', args);
-        });
-
-        socket.on('disconnect', () => {
-            console.log('Отключено от сервера');
-        });
-
         let username = '';
-        
-        function joinChat() {
-            username = document.getElementById('username').value || 'Гость';
+        let hasJoined = false;
+        function log(type, payload) {
+            const logEntry = {
+                timestamp: new Date().toISOString(),
+                type: type,
+                payload: payload
+            };
+            console.log(`[Messenger Client] ${type}`, payload);
+        }
+        socket.on('connect', () => {
+            log('connection', { status: 'connected', sid: socket.id });
+        });
+        socket.on('disconnect', (reason) => {
+            log('disconnection', { status: 'disconnected', reason: reason });
+            addSystemMessage('You have been disconnected from the server.');
+            document.getElementById('messageInput').disabled = true;
+            document.getElementById('sendButton').disabled = true;
+        });
+        function handleJoinClick() {
+            username = document.getElementById('username').value.trim() || 'Guest';
+            if (hasJoined) {
+                log('action', { action: 'rejoin_attempt', username: username });
+                return;
+            }
+            hasJoined = true;
+            log('action', { action: 'join_request', username: username, room: 'main_chat' });
             document.getElementById('messageInput').disabled = false;
-            document.getElementById('sendButton').disabled = false;
-            
+            document.getElementById('sendButton').disabled = false;           
             socket.emit('join_room', {
                 username: username,
                 room: 'main_chat'
             });
-        }
-        
-        function sendMessage() {
+        }  
+        function handleSendMessage() {
             const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-            if (text) {
-                console.log('Отправляем сообщение:', {username, text, room: 'main_chat'});
-                socket.emit('send_message', {
-                    username: username,
-                    text: text,
-            room: 'main_chat'
-                });
-                input.value = '';
-            }
+            const text = input.value.trim();           
+            if (!text) return;
+            log('action', { action: 'send_message_request', username: username, text: text });
+            socket.emit('send_message', {
+                username: username,
+                text: text,
+                room: 'main_chat'
+            });            
+            input.value = '';
         }
-        
-        socket.on('new_message', function(data) {
-            console.log('Обработчик new_message вызван', data);
-            const messages = document.getElementById('messages');
+        socket.on('new_message', (data) => {
+            log('event', { event: 'new_message', data: data });
+            renderMessage(data);
+        });
+        socket.on('status', (data) => {
+            log('event', { event: 'status_update', data: data });
+            addSystemMessage(data.msg);
+        });
+        socket.on('message_history', (history) => {
+            log('event', { event: 'history_loaded', count: history.length });
+            history.forEach(msg => renderMessage(msg));
+        });
+        function renderMessage(data) {
+            const messagesList = document.getElementById('messages');
             const li = document.createElement('li');
             li.className = 'message';
-            li.innerHTML = '<span class="username">' + data.username + '</span> [' + data.timestamp + ']: ' + data.text;
-            messages.appendChild(li);
-            messages.scrollTop = messages.scrollHeight;
-        });
-        
-        socket.on('status', function(data) {
-            console.log('Получен статус:', data);
-            const messages = document.getElementById('messages');
+            const usernameSpan = document.createElement('span');
+            usernameSpan.className = 'username';
+            usernameSpan.textContent = escapeHtml(data.username);
+            const timeStr = data.timestamp || new Date().toLocaleTimeString();
+            const textNode = document.createTextNode(` [${timeStr}]: ${escapeHtml(data.text)}`);
+            li.appendChild(usernameSpan);
+            li.appendChild(textNode);
+            messagesList.appendChild(li);
+            scrollToBottom();
+        }
+        function addSystemMessage(msg) {
+            const messagesList = document.getElementById('messages');
             const li = document.createElement('li');
-            li.style.color = 'gray';
-            li.textContent = data.msg;
-            messages.appendChild(li);
-            messages.scrollTop = messages.scrollHeight;
-        });
-        
-        socket.on('message_history', function(history) {
-            console.log('Получена история:', history);
-            const messages = document.getElementById('messages');
-            history.forEach(msg => {
-                const li = document.createElement('li');
-                li.className = 'message';
-                li.innerHTML = '<span class="username">' + msg.username + '</span> [' + msg.timestamp + ']: ' + msg.text;
-                messages.appendChild(li);
-            });
-            messages.scrollTop = messages.scrollHeight;
-        });
+            li.className = 'message system-msg';
+            li.textContent = msg;
+            messagesList.appendChild(li);
+            scrollToBottom();
+        }
+        function scrollToBottom() {
+            const messagesList = document.getElementById('messages');
+            messagesList.scrollTop = messagesList.scrollHeight;
+        }
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
     </script>
 </body>
 </html>
-
