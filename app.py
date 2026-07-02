@@ -1,12 +1,10 @@
-# Импорты
-from flask import Flask, render_template, request
-from flask_socketio import SocketIO
+#Импорты
 from datetime import datetime
-from flask import request
-from flask_socketio import join_room, emit
 import logging
 import signal
 import sys
+from flask import Flask, render_template, request
+from flask_socketio import SocketIO, join_room, emit
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
