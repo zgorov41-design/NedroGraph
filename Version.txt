@@ -1,0 +1,7 @@
+-- Detailed description -- 
+https://docs.google.com/document/d/1c8y46h4fJxkVoRtX10tHn3jYicye21rTDsRhBuADBTA/edit?usp=sharing">Detailed description
+Versions:
+Pre-alpha (0.1.0)
+Pre-alpha (0.1.1)
+Pre-alpha (0.2.0)
+Pre-alpha (0.3.0)
