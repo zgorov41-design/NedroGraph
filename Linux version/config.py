@@ -1,1 +1,1 @@
-SERVER_IP = "192.168.1.76" 
+SERVER_IP = "" 
