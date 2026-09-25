@@ -1,10 +1,11 @@
         ###║  Thanks for help in the developing this program.  ║###
         ###╚═══════════════════════════════════════════════════╝###
            ┌───────────────────────────────────────────────────┐
-           │  Yandex(Alisa AI) small help in error correction  |
-           │     ChatGpt small help in error corection         |
+           │     Yanex(Alisa AI) help in error correction      │
            │  Flask(Armin Ronacher)&SocketIO(Miguel Grinberg)  │
            │            providing a library server             │
-           │    𝕭𝖗𝖆𝖓𝖉𝖔 (@v_brando) for ideas and testing       │
-           │             Python(Guido van Rossum)              |
+           │    𝕭𝖗𝖆𝖓𝖉𝖔 (@vo_brando) for ideas and testing      │
+           │             Python(Guido van Rossum)              │
+           │                                                   │
+           │                                                   │
            └───────────────────────────────────────────────────┘
