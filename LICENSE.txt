@@ -1,0 +1,43 @@
+NedroGraph
+
+Copyright (c) 2026 NedroGraph contributors
+
+NedroGraph uses third-party software distributed under their respective licenses.
+
+Third-party dependencies:
+
+Python
+License: Python Software Foundation License
+https://www.python.org/
+
+Pygame
+License: GNU Lesser General Public License (LGPL)
+https://www.pygame.org/
+
+Flask
+License: BSD-3-Clause
+https://flask.palletsprojects.com/
+
+Werkzeug
+License: BSD-3-Clause
+https://werkzeug.palletsprojects.com/
+
+Flask-SocketIO
+License: MIT
+https://github.com/miguelgrinberg/Flask-SocketIO
+
+python-socketio
+License: MIT
+https://github.com/miguelgrinberg/python-socketio
+
+requests
+License: Apache License 2.0
+https://requests.readthedocs.io/
+
+gevent
+License: MIT
+https://www.gevent.org/
+
+gevent-websocket
+License: Apache License 2.0
+https://github.com/jgelens/gevent-websocket

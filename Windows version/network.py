@@ -1,20 +1,25 @@
 import socketio
 
-sio = socketio.Client(logger=True, engineio_logger=True)
+logs = False
+
+sio = socketio.Client(logger=logs, engineio_logger=logs)
 
 messages = []
 
 @sio.event
 def connect():
-    print("✅Connect")
+    if logs:
+        print("✅Connect")
 
 @sio.event
 def disconnect():
-    print("❌Disconnect")
+    if logs:
+        print("❌Disconnect")
 
 @sio.on("status")
 def receive_status(data):
-    print("📊STATUS:", data)
+    if logs:
+        print("📊STATUS:", data)
 
 @sio.on("message_history")
 def receive_history(data):
@@ -29,7 +34,8 @@ def receive_message(data):
 
 def connect_to_server(ip, username):
     try:
-        print("🔌Conect to:", ip)
+        if logs:
+            print("🔌Conect to:", ip)
         sio.connect(
             f"http://{ip}:5000"
         )
@@ -41,14 +47,17 @@ def connect_to_server(ip, username):
             }
         )
         return True
+        
     except Exception as e:
-            print("❌Error connect:", e)
+            if logs:
+                print("❌Error connect:", e)
             return False
 
 
 def send_message(username, text):
     if not sio.connected:
-        print("⛔No connect")
+        if logs:
+            print("⛔No connect")
         return
     sio.emit(
         "send_message",
