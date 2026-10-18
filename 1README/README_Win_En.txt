@@ -1,7 +1,7 @@
 This messenger works only with a single Wi‑Fi network or a wired connection.
 If a person is connected to another network, you won’t be able to contact them.
 First, unpack the .zip archive to any location.
-Also, the messenger requires Python version 3.12.3 or higher.
+Also, the messenger requires Python version 3.9 - 3.12 (stable version 3.12.10).
 To run it on Windows:
  Double‑click on install requirements.bat.
 After all packages are successfully installed, double‑click on run.bat.

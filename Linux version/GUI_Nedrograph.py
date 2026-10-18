@@ -3,35 +3,12 @@ import os
 import webbrowser
 import uuid
 import network
-import languages
 import colors
-import subprocess
-import os
-from pathlib import Path
-import re
-
-#panel = {"r":40 , "g":45 , "b":55} 
-#backg = {"r":255 , "g":255 , "b":255} 
-#sett = {"r":20 , "g":20 , "b":25} 
-#font = {"r":240 ,"g":240 ,"b":240}
-
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-subprocess.run(["auto_config.bat"], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
-
 import config
-
-pygame.init()
-
-screen = pygame.display.set_mode((800, 600))
-# Заголовок окна
-if config.sys_lan == "en-US":
-    pygame.display.set_caption(languages.lan_en["en"]["con"])
-else:
-    pygame.display.set_caption(languages.lan_ru["ru"]["con"])
-
-# Шрифты
-font = pygame.font.SysFont("calibri", 28)
-font_c = pygame.font.Font(None, 48)
+import subprocess
+from pathlib import Path
+from datetime import datetime
+import re
 
 # RGB текста
 text11 = ""
@@ -69,11 +46,66 @@ settings_l = False
 settings_c = False
 circle_ru = False
 circle_en = False
-version = "0.4.2"
+history = False
+count_clear = 0
+version = "0.4.3"
 y_name = str(uuid.uuid4())
 config_file = Path("config.py")
 new_language = ""
 
+# Языки
+lan = {
+    "en": {
+        "con": "Connect ...","inter": "Interlocutor","ver": "Version","lang": "language","sett": "settings","you": "You","placeh": "Enter a message:","title": "Chat with ",
+        "custom": "Customize","panel": "Pannel color","backg": "Background color:","sett_c": "Settings color:","font": "Font color:","res": "Reset","name": "Name","text": "text",
+        "history": "History","empty_history": "History is empty",
+    },
+    "ru": {
+        "con": "Подключение ...","inter": "Собеседник","ver": "Версия","lang": "Язык","sett": "Настройки","you": "Ты","placeh": "Введите сообщение:","title": "Чат с ",
+        "custom": "Кастомизация","panel": "Цвет панели:","backg": "Цвет фона:","sett_c": "Цвет настроек:","font": "Цвет текста:","res": "Сброс","name": "Имя","text": "Текст",
+        "history": "История","empty_history": "История пуста",
+    }
+}
+
+color_backg = colors.backg["r"], colors.backg["g"], colors.backg["b"]
+color_font = colors.font["r"], colors.font["g"], colors.font["b"]
+color_panel = colors.panel["r"], colors.panel["g"], colors.panel["b"]
+
+#panel = {"r":40 , "g":45 , "b":55} 
+#backg = {"r":255 , "g":255 , "b":255} 
+#sett = {"r":20 , "g":20 , "b":25} 
+#font = {"r":240 ,"g":240 ,"b":240}
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+subprocess.run(["auto_config.bat"], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+
+import config
+
+pygame.init()
+pygame.font.init()
+
+screen = pygame.display.set_mode((800, 600))
+# Заголовок окна
+if config.sys_lan == "en-US":
+    pygame.display.set_caption(lan["en"]["con"])
+else:
+    pygame.display.set_caption(lan["ru"]["con"])
+
+# Шрифты
+font = pygame.font.SysFont("calibri", 28)
+font_c = pygame.font.Font(None, 48)
+font_h = pygame.font.SysFont("Regular", 20)
+
+# История
+message_history = []
+
+# Форматир языка
+if config.sys_lan == "ru-RU":
+    config.sys_lan = lan
+if config.sys_lan == "en_EN":
+    config.sys_lan = lan
+
+# Функция перезаписи цвета
 def rgb(text, rgb, color):
     if settings_c and rgb:
         if event.type == pygame.TEXTINPUT:
@@ -97,32 +129,32 @@ def rgb(text, rgb, color):
                     config_file.write_text("\n".join(lines) + "\n",encoding="utf-8")
     return text, rgb
 
-
-
 if config.sys_lan == "en-US":
-    i_name = languages.lan_en["en"]["inter"]
+    i_name = lan["en"]["inter"]
     circle_en = True
 else:
-    i_name = languages.lan_ru["ru"]["inter"]
+    i_name = lan["ru"]["inter"]
     circle_ru = True
 # Импорт иконки
-icon = pygame.image.load("icon(1).png").convert_alpha()
+icon = pygame.image.load("images/icon(1).png").convert_alpha()
 pygame.display.set_icon(icon)
 # Импорт спрайтова
-settings = pygame.image.load("settings.png").convert_alpha()
-language = pygame.image.load("language.png").convert_alpha()
-language_l = pygame.image.load("language_l.png").convert_alpha()
+settings = pygame.image.load("images/settings.png").convert_alpha()
+language = pygame.image.load("images/language.png").convert_alpha()
+language_l = pygame.image.load("images/language_l.png").convert_alpha()
 language_l = pygame.transform.scale(language_l, (32, 32))
-customize = pygame.image.load("customize.png").convert_alpha()
+customize = pygame.image.load("images/customize.png").convert_alpha()
+history_icon = pygame.image.load("images/history.png").convert_alpha()
+history_icon = pygame.transform.scale(history_icon, (32, 32))
 
 network.connect_to_server(config.SERVER_IP, y_name)
 # Заголовок окна
 pygame.display.set_caption("NedroGraph — Messenger")
 # .текст. Версия
 if config.sys_lan == "en-US":
-    text_surface = font.render(languages.lan_en["en"]["ver"] + version, True, (240, 240, 240))
+    text_surface = font.render(lan["en"]["ver"] + version, True, (240, 240, 240))
 else:
-    text_surface = font.render(languages.lan_ru["ru"]["ver"] + version, True, (240, 240, 240))
+    text_surface = font.render(lan["ru"]["ver"] + version, True, (240, 240, 240))
 # x,y гипер-ссылки
 text_rect = text_surface.get_rect(topleft=(522, 570))
 
@@ -144,7 +176,7 @@ while running:
                     settings_s = False
                     settings_l = False
                 # Открытие общих настроек
-                elif 523 <= x <= 650 + settings_surface.get_width() and 530 <= y <= 590 + settings_surface() and panel:
+                elif 523 <= x <= 650 and 530 <= y <= 590 and panel:
                     settings_s = True
                     settings_l = False
                 # Открытие настроек языка
@@ -156,6 +188,13 @@ while running:
                     settings_s = False
                     settings_l = False
                     settings_c = False
+                    # История
+                elif 521 <= x <= 640 and 490 <= y <= 525 and panel :
+                    history = True
+                elif 770 <= x <= 800 and 0 <= y <= 30 :
+                    history = False
+
+
                 # поля RGB
                 if settings_c:
                     if 211 <= x <= 262 and 73 <= y <= 103: 
@@ -200,7 +239,7 @@ while running:
                     circle_ru = True
                     circle_en = False
                     config.sys_lan = "ru-RU"
-                    i_name = languages.lan_ru["ru"]["inter"]
+                    i_name = lan["ru"]["inter"]
                     # перезапись языка
                     new_language = "ru-RU"
                     text = config_file.read_text(encoding="utf-8")
@@ -214,7 +253,7 @@ while running:
                     circle_en = True
                     circle_ru = False
                     config.sys_lan = "en-US"
-                    i_name = languages.lan_en["en"]["inter"]
+                    i_name = lan["en"]["inter"]
                     new_language = "en-US"
                     text = config_file.read_text(encoding="utf-8")
                     lines = text.splitlines()
@@ -228,7 +267,7 @@ while running:
                 # Гипер-сслыка на тгк 
                 elif text_rect.collidepoint(event.pos):
                     webbrowser.open("https://t.me/mono_projects")
-
+        # Блок сообщкений
         if panel == False:
             if enter:
                 if event.type == pygame.TEXTINPUT:
@@ -240,11 +279,15 @@ while running:
 
                     if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                         if text.strip() != "":
-
                             network.send_message(y_name, text)
-                            print("Message:", text)
+                            print(y_name)
+                            if config.sys_lan == "en-US":
+                                name = lan["en"]["you"]
+                            else:
+                                name = lan["ru"]["you"]
                             text = ""
                             enter = False
+                            
 
         text11, rgb11 = rgb(text11, rgb11, "r")
         text12, rgb12 = rgb(text12, rgb12, "g")
@@ -258,68 +301,69 @@ while running:
         text41, rgb41 = rgb(text41, rgb41, "r")
         text42, rgb42 = rgb(text42, rgb42, "g")
         text43, rgb43 = rgb(text43, rgb43, "b")
-    
+    # Получение сообщений
     messages = network.get_messages()
+    messages = messages.get("main_chat", []) if isinstance(messages, dict) else messages
     max_visible_messages = 12
     start_index = max(0, len(messages) - max_visible_messages)
     visible_messages = messages[start_index:]
 
     if config.sys_lan == "en-US":
-        title_surface = font.render(languages.lan_en["en"]["title"] + i_name, True, (240, 240, 240))
+        title_surface = font.render(lan["en"]["title"] + i_name, True, (240, 240, 240))
     else:
-        title_surface = font.render(languages.lan_ru["ru"]["title"] + i_name, True, (240, 240, 240))
+        title_surface = font.render(lan["ru"]["title"] + i_name, True, (240, 240, 240))
 
     input_surface = font.render(text, True, (5, 5, 5))
     placeholder_surface = None
 
     if not enter and text == "":
         if config.sys_lan == "en-US":
-            placeholder_surface = font.render(languages.lan_en["en"]["placeh"], True, (0, 0, 0))
+            placeholder_surface = font.render(lan["en"]["placeh"], True, (0, 0, 0))
         else:
-            placeholder_surface = font.render(languages.lan_ru["ru"]["placeh"], True, (0, 0, 0))
+            placeholder_surface = font.render(lan["ru"]["placeh"], True, (0, 0, 0))
 
     message_surfaces = []
     message_y = 80
 
     for message in visible_messages:
-        if message["username"] == y_name:
+        if message.get("username") == y_name:
             if config.sys_lan == "en-US":
-                username = languages.lan_en["en"]["you"]
+                username = lan["en"]["you"]
             else:
-                username = languages.lan_ru["ru"]["you"]
+                username = lan["ru"]["you"]
         else:
             if config.sys_lan == "en-US":
-                username = languages.lan_en["en"]["inter"]
+                username = lan["en"]["inter"]
             else:
-                username = languages.lan_ru["ru"]["inter"]
+                username = lan["ru"]["inter"]
 
         message_surface = font.render(username + ": " + message["text"], True, (0, 0, 0))
         message_surfaces.append((message_surface, message_y))
         message_y += 35
     # Задний фон
-    pygame.draw.rect(screen, (colors.backg["r"], colors.backg["g"], colors.backg["b"], ), (0, 0, 800, 600))
+    pygame.draw.rect(screen, (color_backg), (0, 0, 800, 600))
 
     for message_surface, message_y in message_surfaces:
         screen.blit(message_surface, (20, message_y))
     # Верхняя панель
-    pygame.draw.rect(screen, (colors.panel["r"], colors.panel["g"], colors.panel["b"]), (0, 0, 720, 65))
+    pygame.draw.rect(screen, (color_panel), (0, 0, 720, 65))
     # чат с
     screen.blit(title_surface, (10, 15))
     # Боковая панель
-    pygame.draw.rect(screen, (colors.panel["r"], colors.panel["g"], colors.panel["b"]), (720, 0, 800, 600))
+    pygame.draw.rect(screen, (color_panel), (720, 0, 800, 600))
     # Поле ввода
-    pygame.draw.rect(screen, (5, 5, 5), (5, 530, 705, 70))
-    pygame.draw.rect(screen, (240, 240, 240), (7, 532, 701, 66))
+    pygame.draw.rect(screen, (5, 5, 5), (5, 530, 705, 70), border_radius=5)
+    pygame.draw.rect(screen, (240, 240, 240), (7, 532, 701, 66), border_radius=5)
     # Вводимый текст
     if placeholder_surface:
         screen.blit(placeholder_surface, (20, 552))
     if panel == False:
         if text != "":
             screen.blit(input_surface, (20, 545))
-
+    
     if panel:
         # Открытая панель
-        pygame.draw.rect(screen, (colors.panel["r"], colors.panel["g"], colors.panel["b"]), (520, 0, 800, 600))
+        pygame.draw.rect(screen, (color_panel), (520, 0, 800, 600))
     # Полоски панели
     pygame.draw.rect(screen, (255, 255, 255), (735, 18, 53, 3))
     pygame.draw.rect(screen, (255, 255, 255), (735, 30, 53, 3))
@@ -328,36 +372,45 @@ while running:
     if panel:
         # .текст. Версия
         if config.sys_lan == "en-US":
-            text_surface = font.render(languages.lan_en["en"]["ver"] + version, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            text_surface = font.render(lan["en"]["ver"] + version, True, (color_font))
         else:
-            text_surface = font.render(languages.lan_ru["ru"]["ver"] + version, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            text_surface = font.render(lan["ru"]["ver"] + version, True, (color_font))
         text_rect = text_surface.get_rect(topleft=(522, 570))
 
         screen.blit(text_surface, text_rect)
         screen.blit(settings, (523, 530))
         # .текст. Настройки
         if config.sys_lan == "en-US":
-            settings_surface = font.render(languages.lan_en["en"]["sett"], True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            settings_surface = font.render(lan["en"]["sett"], True, (color_font))
         else:
-            settings_surface = font.render(languages.lan_ru["ru"]["sett"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            settings_surface = font.render(lan["ru"]["sett"], True, (color_font))
         screen.blit(settings_surface, (555, 533))
         pygame.draw.rect(screen, (255, 255, 255), (523, 594, 139, 1))
+
+        # .текст. История
+        if config.sys_lan == "en-US":
+            history_surface = font.render(lan["en"]["history"], True, (color_font))
+        else:
+            history_surface = font.render(lan["ru"]["history"], True, (color_font)) 
+        screen.blit(history_icon, (521, 490))  
+        screen.blit(history_surface, (555, 495)) 
+
     # Общие настройки
     if settings_s and settings_l == False:
-        pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575))
+        pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575), border_radius=10)
         # .текст. Настройки
         if config.sys_lan == "en-US":
-            language_surface = font.render(languages.lan_en["en"]["sett"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            language_surface = font.render(lan["en"]["sett"], True, (color_font))
         else:
-            language_surface = font.render(languages.lan_ru["ru"]["sett"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            language_surface = font.render(lan["ru"]["sett"], True, (color_font))
 
         screen.blit(language_surface, (342, 25))
         screen.blit(language_l, (220, 543))
         # .текст. Язык
         if config.sys_lan == "en-US":
-            language_surface = font.render(languages.lan_en["en"]["lang"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            language_surface = font.render(lan["en"]["lang"], True, (color_font))
         else:
-            language_surface = font.render(languages.lan_ru["ru"]["lang"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            language_surface = font.render(lan["ru"]["lang"], True, (color_font))
 
         screen.blit(language_surface, (257, 548))
         cross_surface = font.render("×", True, (255, 5, 5))
@@ -366,239 +419,239 @@ while running:
         # .текст. Кастомизация
         screen.blit(customize, (220, 500))
         if config.sys_lan == "en-US":
-            customize_surface = font.render(languages.lan_en["en"]["custom"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            customize_surface = font.render(lan["en"]["custom"], True, (color_font))
         else:
-            customize_surface = font.render(languages.lan_ru["ru"]["custom"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            customize_surface = font.render(lan["ru"]["custom"], True, (color_font))
         screen.blit(customize_surface, (257, 505))
     # Настройки языка
     if settings_l:
         # Меню выбора языка
-        pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575))
+        pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575), border_radius=10)
         cross_surface = font.render("×", True, (255, 5, 5))
         screen.blit(cross_surface, (576, 12))
         # .текст. Язык
         if config.sys_lan == "en-US":
-            language_surface = font.render(languages.lan_en["en"]["lang"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            language_surface = font.render(lan["en"]["lang"], True, (color_font))
         else:
-            language_surface = font.render(languages.lan_ru["ru"]["lang"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            language_surface = font.render(lan["ru"]["lang"], True, (color_font))
         screen.blit(language_surface, (342, 25))
 
         # Выбор русского языка
         pygame.draw.circle(screen, (15, 115, 135), (220, 75), 11, 2)
         if circle_ru:
             pygame.draw.circle(screen, (15, 115, 135), (220, 75), 6)
-        ruslang_surface = font.render("Русский", True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+        ruslang_surface = font.render("Русский", True, (color_font))
         screen.blit(ruslang_surface, (237, 63))
 
         # Выбор английского языка
         pygame.draw.circle(screen, (15, 115, 135), (220, 110), 11, 2)
         if circle_en:
             pygame.draw.circle(screen, (15, 115, 135), (220, 110), 6)
-        ruslang_surface = font.render("English", True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+        ruslang_surface = font.render("English", True, (color_font))
         screen.blit(ruslang_surface, (237, 98))
     # Настройки кастомизации
     if settings_c:
-        rgb_backg = font.render((str(colors.backg["r"]) + "      " + str(colors.backg["g"]) + "      " + str(colors.backg["b"])), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+        rgb_backg = font.render((str(colors.backg["r"]) + "      " + str(colors.backg["g"]) + "      " + str(colors.backg["b"])), True, (color_font))
         screen.blit(rgb_backg, (215, 135))
 
-        pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575))
+        pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575), border_radius=10)
         # Крестик
         cross_surface = font.render("×", True, (255, 5, 5))
         screen.blit(cross_surface, (576, 12))
 
         # Панель
-        pygame.draw.rect(screen, (255, 255, 255), (211, 73, 51, 30))  
-        pygame.draw.rect(screen, (70, 80, 95), (213, 75, 47, 26))
-        pygame.draw.rect(screen, (255, 255, 255), (275, 73, 51, 30))  
-        pygame.draw.rect(screen, (70, 80, 95), (277, 75, 47, 26))
-        pygame.draw.rect(screen, (255, 255, 255), (339, 73, 51, 30))  
-        pygame.draw.rect(screen, (70, 80, 95), (341, 75, 47, 26))
-        surface_rgb11 = font.render(str(colors.panel["r"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb12 = font.render(str(colors.panel["g"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb13 = font.render(str(colors.panel["b"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb21 = font.render(str(colors.panel["r"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb22 = font.render(str(colors.panel["g"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb23 = font.render(str(colors.panel["b"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb31 = font.render(str(colors.panel["r"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb32 = font.render(str(colors.panel["g"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb33 = font.render(str(colors.panel["b"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb41 = font.render(str(colors.panel["r"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb42 = font.render(str(colors.panel["g"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb43 = font.render(str(colors.panel["b"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+        pygame.draw.rect(screen, (255, 255, 255), (211, 73, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (70, 80, 95), (213, 75, 47, 26), border_radius=5)
+        pygame.draw.rect(screen, (255, 255, 255), (275, 73, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (70, 80, 95), (277, 75, 47, 26), border_radius=5)
+        pygame.draw.rect(screen, (255, 255, 255), (339, 73, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (70, 80, 95), (341, 75, 47, 26), border_radius=5)
+        surface_rgb11 = font.render(str(colors.panel["r"]), True, (color_font))
+        surface_rgb12 = font.render(str(colors.panel["g"]), True, (color_font))
+        surface_rgb13 = font.render(str(colors.panel["b"]), True, (color_font))
+        surface_rgb21 = font.render(str(colors.panel["r"]), True, (color_font))
+        surface_rgb22 = font.render(str(colors.panel["g"]), True, (color_font))
+        surface_rgb23 = font.render(str(colors.panel["b"]), True, (color_font))
+        surface_rgb31 = font.render(str(colors.panel["r"]), True, (color_font))
+        surface_rgb32 = font.render(str(colors.panel["g"]), True, (color_font))
+        surface_rgb33 = font.render(str(colors.panel["b"]), True, (color_font))
+        surface_rgb41 = font.render(str(colors.panel["r"]), True, (color_font))
+        surface_rgb42 = font.render(str(colors.panel["g"]), True, (color_font))
+        surface_rgb43 = font.render(str(colors.panel["b"]), True, (color_font))
         
         if rgb11:
-            rgb11_surface = font.render(text11, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb11_surface = font.render(text11, True, (color_font))
             screen.blit(rgb11_surface, (215, 75))
         else:
             screen.blit(surface_rgb11, (215, 75))
         if rgb12:
-            rgb12_surface = font.render(text12, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb12_surface = font.render(text12, True, (color_font))
             screen.blit(rgb12_surface, (279, 75))
         else:
             screen.blit(surface_rgb12, (279, 75))
         if rgb13:
-            rgb13_surface = font.render(text13, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb13_surface = font.render(text13, True, (color_font))
             screen.blit(rgb13_surface, (343, 75))
         else:
             screen.blit(surface_rgb13, (343, 75))
                 
         if rgb11:
-            rgb11_surface = font.render(text11, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb11_surface = font.render(text11, True, (color_font))
             screen.blit(rgb11_surface, (215, 75))
         if rgb12:
-            rgb12_surface = font.render(text12, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb12_surface = font.render(text12, True, (color_font))
             screen.blit(rgb12_surface, (279, 75))
         if rgb13:
-            rgb13_surface = font.render(text13, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb13_surface = font.render(text13, True, (color_font))
             screen.blit(rgb13_surface, (343, 75))
 
         if rgb21:
-            rgb21_surface = font.render(text21, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb21_surface = font.render(text21, True, (color_font))
             screen.blit(rgb21_surface, (215, 135))
         if rgb22:
-            rgb22_surface = font.render(text22, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb22_surface = font.render(text22, True, (color_font))
             screen.blit(rgb22_surface, (279, 135))
         if rgb23:
-            rgb23_surface = font.render(text23, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb23_surface = font.render(text23, True, (color_font))
             screen.blit(rgb23_surface, (343, 135))
 
         if rgb31:
-            rgb31_surface = font.render(text31, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb31_surface = font.render(text31, True, (color_font))
             screen.blit(rgb31_surface, (215, 195))
         if rgb32:
-            rgb32_surface = font.render(text32, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb32_surface = font.render(text32, True, (color_font))
             screen.blit(rgb32_surface, (279, 195))
         if rgb33:
-            rgb33_surface = font.render(text33, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb33_surface = font.render(text33, True, (color_font))
             screen.blit(rgb33_surface, (343, 195))
 
         if rgb41:
-            rgb41_surface = font.render(text41, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb41_surface = font.render(text41, True, (color_font))
             screen.blit(rgb41_surface, (215, 225))
         if rgb42:
-            rgb42_surface = font.render(text42, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb42_surface = font.render(text42, True, (color_font))
             screen.blit(rgb42_surface, (279, 225))
         if rgb43:
-            rgb43_surface = font.render(text43, True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            rgb43_surface = font.render(text43, True, (color_font))
             screen.blit(rgb43_surface, (343, 225))
         # Задний фон
-        pygame.draw.rect(screen, (255, 255, 255), (211, 133, 51, 30))  
-        pygame.draw.rect(screen, (70, 80, 95), (213, 135, 47, 26))
-        pygame.draw.rect(screen, (255, 255, 255), (275, 133, 51, 30))  
-        pygame.draw.rect(screen, (70, 80, 95), (277, 135, 47, 26))
-        pygame.draw.rect(screen, (255, 255, 255), (339, 133, 51, 30))  
-        pygame.draw.rect(screen, (70, 80, 95), (341, 135, 47, 26))
-        surface_rgb21 = font.render(str(colors.backg["r"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb22 = font.render(str(colors.backg["g"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb23 = font.render(str(colors.backg["b"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+        pygame.draw.rect(screen, (255, 255, 255), (211, 133, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (70, 80, 95), (213, 135, 47, 26), border_radius=5)
+        pygame.draw.rect(screen, (255, 255, 255), (275, 133, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (70, 80, 95), (277, 135, 47, 26), border_radius=5)
+        pygame.draw.rect(screen, (255, 255, 255), (339, 133, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (70, 80, 95), (341, 135, 47, 26), border_radius=5)
+        surface_rgb21 = font.render(str(colors.backg["r"]), True, (color_font))
+        surface_rgb22 = font.render(str(colors.backg["g"]), True, (color_font))
+        surface_rgb23 = font.render(str(colors.backg["b"]), True, (color_font))
         if rgb21:
-            rgb21_surface = font.render(text21, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb21_surface = font.render(text21, True, (color_font))
             screen.blit(rgb21_surface, (215, 135))
         else:
             screen.blit(surface_rgb21, (215, 135))
         if rgb22:
-            rgb22_surface = font.render(text22, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb22_surface = font.render(text22, True, (color_font))
             screen.blit(rgb22_surface, (279, 135))
         else:
             screen.blit(surface_rgb22, (279, 135))
         if rgb23:
-            rgb23_surface = font.render(text23, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb23_surface = font.render(text23, True, (color_font))
             screen.blit(rgb23_surface, (343, 135))
         else:
             screen.blit(surface_rgb23, (343, 135))
         # Цвет окна настроек
-        pygame.draw.rect(screen, (255, 255, 255), (211, 193, 51, 30))   
-        pygame.draw.rect(screen, (70, 80, 95), (213, 195, 47, 26))
-        pygame.draw.rect(screen, (255, 255, 255), (275, 193, 51, 30))  
-        pygame.draw.rect(screen, (70, 80, 95), (277, 195, 47, 26))
-        pygame.draw.rect(screen, (255, 255, 255), (339, 193, 51, 30))   
-        pygame.draw.rect(screen, (70, 80, 95), (341, 195, 47, 26))
-        surface_rgb31 = font.render(str(colors.sett["r"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb32 = font.render(str(colors.sett["g"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb33 = font.render(str(colors.sett["b"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+        pygame.draw.rect(screen, (255, 255, 255), (211, 193, 51, 30), border_radius=5)   
+        pygame.draw.rect(screen, (70, 80, 95), (213, 195, 47, 26), border_radius=5)
+        pygame.draw.rect(screen, (255, 255, 255), (275, 193, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (70, 80, 95), (277, 195, 47, 26), border_radius=5)
+        pygame.draw.rect(screen, (255, 255, 255), (339, 193, 51, 30), border_radius=5)   
+        pygame.draw.rect(screen, (70, 80, 95), (341, 195, 47, 26), border_radius=5)
+        surface_rgb31 = font.render(str(colors.sett["r"]), True, (color_font))
+        surface_rgb32 = font.render(str(colors.sett["g"]), True, (color_font))
+        surface_rgb33 = font.render(str(colors.sett["b"]), True, (color_font))
         if rgb31:
-            rgb31_surface = font.render(text31, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb31_surface = font.render(text31, True, (color_font))
             screen.blit(rgb31_surface, (215, 195))
         else:
             screen.blit(surface_rgb31, (215, 195))
         if rgb32:
-            rgb22_surface = font.render(text32, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb22_surface = font.render(text32, True, (color_font))
             screen.blit(rgb32_surface, (279, 195))
         else:
             screen.blit(surface_rgb32, (279, 195))
         if rgb33:
-            rgb23_surface = font.render(text33, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb23_surface = font.render(text33, True, (color_font))
             screen.blit(rgb33_surface, (343, 195))
         else:
             screen.blit(surface_rgb33, (343, 195))
         # Цвет текста
-        pygame.draw.rect(screen, (255, 255, 255), (211, 253, 51, 30))  
-        pygame.draw.rect(screen, (70, 80, 95), (213, 255, 47, 26))
-        pygame.draw.rect(screen, (255, 255, 255), (275, 253, 51, 30))   
-        pygame.draw.rect(screen, (70, 80, 95), (277, 255, 47, 26))
-        pygame.draw.rect(screen, (255, 255, 255), (339, 253, 51, 30)) 
-        pygame.draw.rect(screen, (70, 80, 95), (341, 255, 47, 26))
-        surface_rgb41 = font.render(str(colors.font["r"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb42 = font.render(str(colors.font["g"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
-        surface_rgb43 = font.render(str(colors.font["b"]), True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+        pygame.draw.rect(screen, (255, 255, 255), (211, 253, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (70, 80, 95), (213, 255, 47, 26), border_radius=5)
+        pygame.draw.rect(screen, (255, 255, 255), (275, 253, 51, 30), border_radius=5)   
+        pygame.draw.rect(screen, (70, 80, 95), (277, 255, 47, 26), border_radius=5)
+        pygame.draw.rect(screen, (255, 255, 255), (339, 253, 51, 30), border_radius=5) 
+        pygame.draw.rect(screen, (70, 80, 95), (341, 255, 47, 26), border_radius=5)
+        surface_rgb41 = font.render(str(colors.font["r"]), True, (color_font))
+        surface_rgb42 = font.render(str(colors.font["g"]), True, (color_font))
+        surface_rgb43 = font.render(str(colors.font["b"]), True, (color_font))
         if rgb41:
-            rgb41_surface = font.render(text41, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb41_surface = font.render(text41, True, (color_font))
             screen.blit(rgb41_surface, (215, 255))
         else:
             screen.blit(surface_rgb41, (215, 255))
         if rgb42:
-            rgb42_surface = font.render(text42, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb42_surface = font.render(text42, True, (color_font))
             screen.blit(rgb42_surface, (279, 255))
         else:
             screen.blit(surface_rgb42, (279, 255))
         if rgb43:
-            rgb43_surface = font.render(text43, True, (colors.font["r"], colors.font["g"], colors.font["b"]))
+            rgb43_surface = font.render(text43, True, (color_font))
             screen.blit(rgb43_surface, (343, 255))
         else:
             screen.blit(surface_rgb43, (343, 255))
 
         #.текст. Цвет панели
         if config.sys_lan == "en-US":
-            surface_1 = font.render(languages.lan_en["en"]["panel"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            surface_1 = font.render(lan["en"]["panel"], True, (color_font))
         else:
-            surface_1 = font.render(languages.lan_ru["ru"]["panel"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            surface_1 = font.render(lan["ru"]["panel"], True, (color_font))
 
         pygame.draw.rect(screen, (255, 255, 255), (450, 73, 38, 28))
-        pygame.draw.rect(screen, (colors.panel["r"], colors.panel["g"], colors.panel["b"]), (452, 75, 34 , 24))
+        pygame.draw.rect(screen, (color_panel), (452, 75, 34 , 24))
         screen.blit(surface_1, (215, 45))
 
         #.текст. Цвет заднего фона
         if config.sys_lan == "en-US":
-            surface_2 = font.render(languages.lan_en["en"]["backg"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            surface_2 = font.render(lan["en"]["backg"], True, (color_font))
         else:
-            surface_2 = font.render(languages.lan_ru["ru"]["backg"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            surface_2 = font.render(lan["ru"]["backg"], True, (color_font))
 
         pygame.draw.rect(screen, (255, 255, 255), (450, 133, 38, 28))
-        pygame.draw.rect(screen, (colors.backg["r"], colors.backg["g"], colors.backg["b"]), (452, 135, 34 , 24))
+        pygame.draw.rect(screen, (color_backg), (452, 135, 34 , 24))
         screen.blit(surface_2, (215, 105))
         #.текст. Цвет настроек
         if config.sys_lan == "en-US":
-            surface_2 = font.render(languages.lan_en["en"]["sett_c"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            surface_2 = font.render(lan["en"]["sett_c"], True, (color_font))
         else:
-            surface_2 = font.render(languages.lan_ru["ru"]["sett_c"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            surface_2 = font.render(lan["ru"]["sett_c"], True, (color_font))
 
         pygame.draw.rect(screen, (255, 255, 255), (450, 193, 38, 28))
         pygame.draw.rect(screen, (colors.sett["r"], colors.sett["g"], colors.sett["b"]), (452, 195, 34 , 24))
         screen.blit(surface_2, (215, 165))
         #.текст. Цвет текста
         if config.sys_lan == "en-US":
-            surface_2 = font.render(languages.lan_en["en"]["font"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            surface_2 = font.render(lan["en"]["font"], True, (color_font))
         else:
-            surface_2 = font.render(languages.lan_ru["ru"]["font"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            surface_2 = font.render(lan["ru"]["font"], True, (color_font))
 
         pygame.draw.rect(screen, (255, 255, 255), (450, 253, 38, 28))
-        pygame.draw.rect(screen, (colors.font["r"], colors.font["g"], colors.font["b"]), (452, 255, 34 , 24))
+        pygame.draw.rect(screen, (color_font), (452, 255, 34 , 24))
         screen.blit(surface_2, (215, 225))
 
         if config.sys_lan == "en-US":
-            res_surface = font.render(languages.lan_en["en"]["res"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            res_surface = font.render(lan["en"]["res"], True, (color_font))
         else:
-            res_surface = font.render(languages.lan_ru["ru"]["res"], True, (colors.font["r"], colors.font["g"] , colors.font["b"]))
+            res_surface = font.render(lan["ru"]["res"], True, (color_font))
         screen.blit(res_surface, (515, 555))
         if settings_c and 515 <= x <= 515 + res_surface.get_width() and 555 <= y <= 555 + res_surface.get_height():
             reset = True
@@ -611,6 +664,48 @@ while running:
             colors.font = {"r":240, "g":240, "b":240}
             reset = False
 
+# История сообщений
+    if history:
+        panel_color = (
+            colors.panel["r"],
+            colors.panel["g"],
+            colors.panel["b"]
+        )
+        pygame.draw.rect(screen, panel_color, (0, 0, 800, 600))
+
+        messages = network.get_messages()
+
+        if not messages:
+            if config.sys_lan == "en-US":
+                empty_history_surface = font.render(lan["en"]["empty_history"], True,(color_font))
+            else:
+                empty_history_surface = font.render(lan["ru"]["empty_history"], True,(color_font))
+
+            screen.blit(empty_history_surface, (10, 10))
+
+        cross_surface = font.render("×", True, (255, 5, 5))
+        screen.blit(cross_surface, (770, 0))
+
+        history_pos_y = 10
+        history_pos_x = 10
+        line_height = max(font_h.get_linesize(), 22)
+
+        for msg in messages:
+            if msg.get("username") == y_name:
+                username = lan["en"]["you"] if config.sys_lan == "en-US" else lan["ru"]["you"]
+            else:
+                username = lan["en"]["inter"] if config.sys_lan == "en-US" else lan["ru"]["inter"]
+
+            line_history = f"{username}: {msg['text']}    {msg.get('timestamp', '')}"
+            line_surface = font_h.render(line_history, True,(color_font))
+
+            if history_pos_y + line_height > 590:
+                history_pos_x += 300
+                history_pos_y = 40
+
+            screen.blit(line_surface, (history_pos_x, history_pos_y))
+            history_pos_y += line_height
+                    
     pygame.display.flip()
 network.disconnect()
 pygame.quit()
