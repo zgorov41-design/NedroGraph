@@ -47,8 +47,9 @@ settings_c = False
 circle_ru = False
 circle_en = False
 history = False
+emoji_panel = False
 count_clear = 0
-version = "0.4.3"
+version = "0.4.4"
 y_name = str(uuid.uuid4())
 config_file = Path("config.py")
 new_language = ""
@@ -58,13 +59,45 @@ lan = {
     "en": {
         "con": "Connect ...","inter": "Interlocutor","ver": "Version","lang": "language","sett": "settings","you": "You","placeh": "Enter a message:","title": "Chat with ",
         "custom": "Customize","panel": "Pannel color","backg": "Background color:","sett_c": "Settings color:","font": "Font color:","res": "Reset","name": "Name","text": "text",
-        "history": "History","empty_history": "History is empty",
+        "history": "History","empty_history": "History is empty","emoji": "Emoji",
     },
     "ru": {
         "con": "Подключение ...","inter": "Собеседник","ver": "Версия","lang": "Язык","sett": "Настройки","you": "Ты","placeh": "Введите сообщение:","title": "Чат с ",
         "custom": "Кастомизация","panel": "Цвет панели:","backg": "Цвет фона:","sett_c": "Цвет настроек:","font": "Цвет текста:","res": "Сброс","name": "Имя","text": "Текст",
-        "history": "История","empty_history": "История пуста",
+        "history": "История","empty_history": "История пуста","emoji": "Эмодзи",
     }
+}
+# Эмоджи
+emoji = {
+    "smile_face": "😊", "wide_smile": "😀", "shine_smile": "😁", "laught_cry": "😂", "rofl": "🤣", "nervous_laught": "😅",
+    "arrow_eyes": "😆", "wink": "😉", "relax_face": "😌", "eyes_hurts": "😍", "more_hurts": "🥰", "air_kiss": "😘",
+    "kiss": "😗", "yummi": "😋", "show_tongue": "😛", "wink_tongue": "😜", "crazy": "🤪", "cool": "😎",
+    "smirking": "😏", "annoyed": "😒", "bored": "😔", "sad": "😕", "little_sad": "🙁", "cry": "😢",
+    "more_cry": "😭", "in_scare": "😱", "omg": "😨", "neutral": "😐", "quietly": "🤫", "stress": "😣",
+    "tired": "😩", "yawn": "🥱", "sleepy": "😴", "boom_face": "🤯", "think": "🤔", "clever": "🤓",
+    "celebrate": "🥳", "like": "👍", "dis_like": "👎", "ok": "👌",
+}
+
+replacements = {
+    ":smile": "😀",
+    ":hurt": "❤️",
+    ":rofl": "🤣",
+    ":ok": "👌",
+    ":yes": "👍",
+    ":like": "👍",
+    ":dislike": "👎",
+    ":no": "👎",
+    ":sad": "😕",
+
+    ":улыбка": "😀",
+    ":сердце": "❤️",
+    ":рофл": "🤣",
+    ":ок": "👌",
+    ":да": "👍",
+    ":лайк": "👍",
+    ":диз": "👎",
+    ":нет": "👎",
+    ":грустный": "😕",
 }
 
 color_backg = colors.backg["r"], colors.backg["g"], colors.backg["b"]
@@ -95,6 +128,14 @@ else:
 font = pygame.font.SysFont("calibri", 28)
 font_c = pygame.font.Font(None, 48)
 font_h = pygame.font.SysFont("Regular", 20)
+font_e = pygame.font.Font('emoji.ttf', 28)
+
+rendered = {}
+for key, ch in emoji.items():
+    surf = font_e.render(ch, True, (0, 0, 0))
+    rendered[key] = surf
+start_x, start_y = 10, 10
+cell_h = 36
 
 # История
 message_history = []
@@ -138,7 +179,7 @@ else:
 # Импорт иконки
 icon = pygame.image.load("images/icon(1).png").convert_alpha()
 pygame.display.set_icon(icon)
-# Импорт спрайтова
+# Импорт спройтова
 settings = pygame.image.load("images/settings.png").convert_alpha()
 language = pygame.image.load("images/language.png").convert_alpha()
 language_l = pygame.image.load("images/language_l.png").convert_alpha()
@@ -146,6 +187,8 @@ language_l = pygame.transform.scale(language_l, (32, 32))
 customize = pygame.image.load("images/customize.png").convert_alpha()
 history_icon = pygame.image.load("images/history.png").convert_alpha()
 history_icon = pygame.transform.scale(history_icon, (32, 32))
+img_emoji = pygame.image.load("images/emoji.png").convert_alpha()
+
 
 network.connect_to_server(config.SERVER_IP, y_name)
 # Заголовок окна
@@ -188,11 +231,15 @@ while running:
                     settings_s = False
                     settings_l = False
                     settings_c = False
+                    emoji_panel = False
                     # История
                 elif 521 <= x <= 640 and 490 <= y <= 525 and panel :
                     history = True
                 elif 770 <= x <= 800 and 0 <= y <= 30 :
                     history = False
+                    # Эмодзи
+                elif 521 <= x <= 640 and 450 <= y <= 500 and panel :
+                    emoji_panel = True
 
 
                 # поля RGB
@@ -267,7 +314,6 @@ while running:
                 # Гипер-сслыка на тгк 
                 elif text_rect.collidepoint(event.pos):
                     webbrowser.open("https://t.me/mono_projects")
-        # Блок сообщкений
         if panel == False:
             if enter:
                 if event.type == pygame.TEXTINPUT:
@@ -278,8 +324,11 @@ while running:
                         text = text[:-1]
 
                     if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                        if text.strip() != "":
-                            network.send_message(y_name, text)
+                        if text != "":
+                            result_text = text 
+                            for code, emoji_char in replacements.items():
+                                result_text = result_text.replace(code, emoji_char)
+                            network.send_message(y_name, result_text)
                             print(y_name)
                             if config.sys_lan == "en-US":
                                 name = lan["en"]["you"]
@@ -337,14 +386,20 @@ while running:
             else:
                 username = lan["ru"]["inter"]
 
-        message_surface = font.render(username + ": " + message["text"], True, (0, 0, 0))
-        message_surfaces.append((message_surface, message_y))
+        message_name_surf = font.render(username + ": ", True, (0, 0, 0))
+        message_text_surf = font_e.render(message["text"], True, (0, 0, 0))
+        total_w = message_name_surf.get_width() + message_text_surf.get_width()
+        total_h = max(message_name_surf.get_height(), message_text_surf.get_height())
+        combined_surf = pygame.Surface((total_w, total_h), pygame.SRCALPHA)
+        combined_surf.blit(message_name_surf, (0, 0))
+        combined_surf.blit(message_text_surf, (message_name_surf.get_width(), 0))
+        message_surfaces.append((combined_surf, message_y))
         message_y += 35
     # Задний фон
     pygame.draw.rect(screen, (color_backg), (0, 0, 800, 600))
 
-    for message_surface, message_y in message_surfaces:
-        screen.blit(message_surface, (20, message_y))
+    for surf, y in message_surfaces:
+        screen.blit(surf, (20, y))
     # Верхняя панель
     pygame.draw.rect(screen, (color_panel), (0, 0, 720, 65))
     # чат с
@@ -395,6 +450,14 @@ while running:
         screen.blit(history_icon, (521, 490))  
         screen.blit(history_surface, (555, 495)) 
 
+        # .текст. Эмодзи
+        if config.sys_lan == "en-US":
+            emoji_surface = font.render(lan["en"]["emoji"], True, (color_font))
+        else:
+            emoji_surface = font.render(lan["ru"]["emoji"], True, (color_font))  
+        screen.blit(emoji_surface, (555, 452)) 
+        screen.blit(img_emoji, (523, 450))
+        
     # Общие настройки
     if settings_s and settings_l == False:
         pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575), border_radius=10)
@@ -705,7 +768,59 @@ while running:
 
             screen.blit(line_surface, (history_pos_x, history_pos_y))
             history_pos_y += line_height
-                    
+ 
+    # Панель эмодзи
+    if emoji_panel:
+        pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575), border_radius=10)   
+        cross_surface = font.render("×", True, (255, 5, 5))
+        screen.blit(cross_surface, (576, 12))   
+        # .текст. Эмодзи
+        if config.sys_lan == "en-US":
+            emoji_surface = font.render(lan["en"]["emoji"], True, (color_font))
+        else:
+            emoji_surface = font.render(lan["ru"]["emoji"], True, (color_font))
+        screen.blit(emoji_surface, (342, 25)) 
+        list_emoji1 = """:smile - 😀
+          :hurt - ❤️"""
+        list_emoji2 = """:rofl - 🤣
+             :ok - 👌"""
+        list_emoji3 = """:yes - 👍
+             :like - 👍"""
+        list_emoji4 = """:dislike - 👎
+        :no - 👎"""
+        list_emoji5 = ":sad - 😕"
+
+        list_emoji6 = """:улыбка - 😀
+        :сердце - ❤️"""
+        list_emoji7 = """:рофл - 🤣
+           :ок - 👌"""
+        list_emoji8 = """:да - 👍
+                :лайк - 👍"""
+        list_emoji9 = """:диз - 👎
+               :нет - 👎"""
+        list_emoji10  = ":грустный - 😕"
+
+        emoji_list_surface1 = font_e.render(list_emoji1, True, (color_font))
+        screen.blit(emoji_list_surface1, (220, 50)) 
+        emoji_list_surface2 = font_e.render(list_emoji2, True, (color_font))
+        screen.blit(emoji_list_surface2, (220, 80)) 
+        emoji_list_surface3 = font_e.render(list_emoji3, True, (color_font))
+        screen.blit(emoji_list_surface3, (220, 110)) 
+        emoji_list_surface4 = font_e.render(list_emoji4, True, (color_font))
+        screen.blit(emoji_list_surface4, (220, 140)) 
+        emoji_list_surface5 = font_e.render(list_emoji5, True, (color_font))
+        screen.blit(emoji_list_surface5, (220, 170)) 
+
+        #emoji_list_surface6 = font.render(list_emoji6, True, (color_font))
+        #screen.blit(emoji_list_surface6, (220, 230)) 
+        #emoji_list_surface7 = font.render(list_emoji7, True, (color_font))
+        #screen.blit(emoji_list_surface7, (220, 260)) 
+        #emoji_list_surface8 = font.render(list_emoji8, True, (color_font))
+        #screen.blit(emoji_list_surface8, (220, 290)) 
+        #emoji_list_surface9 = font.render(list_emoji9, True, (color_font))
+        #screen.blit(emoji_list_surface9, (220, 320)) 
+        #emoji_list_surface10 = font.render(list_emoji10, True, (color_font))
+        #screen.blit(emoji_list_surface10, (220, 350)) 
     pygame.display.flip()
 network.disconnect()
 pygame.quit()
