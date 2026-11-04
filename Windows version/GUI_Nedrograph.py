@@ -49,7 +49,7 @@ circle_en = False
 history = False
 emoji_panel = False
 count_clear = 0
-version = "0.4.4"
+version = "0.4.5"
 y_name = str(uuid.uuid4())
 config_file = Path("config.py")
 new_language = ""
@@ -147,10 +147,10 @@ if config.sys_lan == "en_EN":
     config.sys_lan = lan
 
 # Функция перезаписи цвета
-def rgb(text, rgb, color):
+def rgb(text, rgb, color, dict_name, event):
     if settings_c and rgb:
         if event.type == pygame.TEXTINPUT:
-            if len(text) < 3  and event.text.isdigit():
+            if len(text) < 3 and event.text.isdigit():
                 text += event.text
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_BACKSPACE:
@@ -159,15 +159,15 @@ def rgb(text, rgb, color):
                 if text.strip() != "" and 0 <= int(text) <= 255:
                     print("Value:", text)
                     rgb = False
-                    colors.panel[color] = int(text)
+                    getattr(colors, dict_name)[color] = int(text)
                     config_file = Path("colors.py")
                     config_text = config_file.read_text(encoding="utf-8")
                     lines = config_text.splitlines()
                     for i, line in enumerate(lines):
-                        if line.strip().startswith("panel ="):
-                            lines[i] = re.sub(rf'("{color}"\s*:\s*)\d+',rf'\g<1>{text}',line)
+                        if line.strip().startswith(f"{dict_name} ="):
+                            lines[i] = re.sub(rf'("{color}"\s*:\s*)\d+', rf'\g<1>{text}', line)
                             break
-                    config_file.write_text("\n".join(lines) + "\n",encoding="utf-8")
+                    config_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return text, rgb
 
 if config.sys_lan == "en-US":
@@ -233,18 +233,18 @@ while running:
                     settings_c = False
                     emoji_panel = False
                     # История
-                elif 521 <= x <= 640 and 490 <= y <= 525 and panel :
+                elif 521 <= x <= 640 and 490 <= y <= 525 and panel:
                     history = True
-                elif 770 <= x <= 800 and 0 <= y <= 30 :
+                elif 770 <= x <= 800 and 0 <= y <= 30:
                     history = False
                     # Эмодзи
-                elif 521 <= x <= 640 and 450 <= y <= 500 and panel :
+                elif 521 <= x <= 640 and 450 <= y <= 500 and panel:
                     emoji_panel = True
 
 
                 # поля RGB
                 if settings_c:
-                    if 211 <= x <= 262 and 73 <= y <= 103: 
+                    if 211 <= x <= 262 and 73 <= y <= 103:
                         rgb11 = True
                         text11 = ""
                     elif 275 <= x <= 326 and 73 <= y <= 103:
@@ -260,26 +260,26 @@ while running:
                         rgb22 = True
                         text22 = ""
                     elif 339 <= x <= 390 and 133 <= y <= 163:
-                        rgb23 = True 
-                        text23 = "" 
+                        rgb23 = True
+                        text23 = ""
                     elif 211 <= x <= 262 and 193 <= y <= 223:
                         rgb31 = True
                         text31 = ""
                     elif 275 <= x <= 326 and 193 <= y <= 223:
                         rgb32 = True
-                        text32 = "" 
+                        text32 = ""
                     elif 339 <= x <= 390 and 193 <= y <= 223:
                         rgb33 = True
                         text33 = ""
                     elif 211 <= x <= 262 and 253 <= y <= 283:
                         rgb41 = True
-                        text41 = "" 
+                        text41 = ""
                     elif 275 <= x <= 326 and 253 <= y <= 283:
                         rgb42 = True
-                        text42 = "" 
+                        text42 = ""
                     elif 339 <= x <= 390 and 253 <= y <= 283:
                         rgb43 = True
-                        text43 = "" 
+                        text43 = ""
 
                 # Выбор языка русский
                 elif 203 <= x <= 233 and 62 <= y <= 88 and settings_l:
@@ -311,7 +311,7 @@ while running:
                 # Открытие настроек кастомизации
                 elif 220 <= x <= 350 and 505 <= y <= 540 and settings_s:
                     settings_c = True
-                # Гипер-сслыка на тгк 
+                # Гипер-сслыка на тгк
                 elif text_rect.collidepoint(event.pos):
                     webbrowser.open("https://t.me/mono_projects")
         if panel == False:
@@ -325,7 +325,7 @@ while running:
 
                     if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                         if text != "":
-                            result_text = text 
+                            result_text = text
                             for code, emoji_char in replacements.items():
                                 result_text = result_text.replace(code, emoji_char)
                             network.send_message(y_name, result_text)
@@ -336,20 +336,25 @@ while running:
                                 name = lan["ru"]["you"]
                             text = ""
                             enter = False
-                            
 
-        text11, rgb11 = rgb(text11, rgb11, "r")
-        text12, rgb12 = rgb(text12, rgb12, "g")
-        text13, rgb13 = rgb(text13, rgb13, "b")
-        text21, rgb21 = rgb(text21, rgb21, "r")
-        text22, rgb22 = rgb(text22, rgb22, "g")
-        text23, rgb23 = rgb(text23, rgb23, "b")
-        text31, rgb31 = rgb(text31, rgb31, "r")
-        text32, rgb32 = rgb(text32, rgb32, "g")
-        text33, rgb33 = rgb(text33, rgb33, "b")
-        text41, rgb41 = rgb(text41, rgb41, "r")
-        text42, rgb42 = rgb(text42, rgb42, "g")
-        text43, rgb43 = rgb(text43, rgb43, "b")
+
+        text11, rgb11 = rgb(text11, rgb11, "r", "panel", event)
+        text12, rgb12 = rgb(text12, rgb12, "g", "panel", event)
+        text13, rgb13 = rgb(text13, rgb13, "b", "panel", event)
+        text21, rgb21 = rgb(text21, rgb21, "r", "backg", event)
+        text22, rgb22 = rgb(text22, rgb22, "g", "backg", event)
+        text23, rgb23 = rgb(text23, rgb23, "b", "backg", event)
+        text31, rgb31 = rgb(text31, rgb31, "r", "sett", event)
+        text32, rgb32 = rgb(text32, rgb32, "g", "sett", event)
+        text33, rgb33 = rgb(text33, rgb33, "b", "sett", event)
+        text41, rgb41 = rgb(text41, rgb41, "r", "font", event)
+        text42, rgb42 = rgb(text42, rgb42, "g", "font", event)
+        text43, rgb43 = rgb(text43, rgb43, "b", "font", event)
+
+    color_backg = colors.backg["r"], colors.backg["g"], colors.backg["b"]
+    color_font = colors.font["r"], colors.font["g"], colors.font["b"]
+    color_panel = colors.panel["r"], colors.panel["g"], colors.panel["b"]
+
     # Получение сообщений
     messages = network.get_messages()
     messages = messages.get("main_chat", []) if isinstance(messages, dict) else messages
@@ -415,7 +420,7 @@ while running:
     if panel == False:
         if text != "":
             screen.blit(input_surface, (20, 545))
-    
+
     if panel:
         # Открытая панель
         pygame.draw.rect(screen, (color_panel), (520, 0, 800, 600))
@@ -446,18 +451,18 @@ while running:
         if config.sys_lan == "en-US":
             history_surface = font.render(lan["en"]["history"], True, (color_font))
         else:
-            history_surface = font.render(lan["ru"]["history"], True, (color_font)) 
-        screen.blit(history_icon, (521, 490))  
-        screen.blit(history_surface, (555, 495)) 
+            history_surface = font.render(lan["ru"]["history"], True, (color_font))
+        screen.blit(history_icon, (521, 490))
+        screen.blit(history_surface, (555, 495))
 
         # .текст. Эмодзи
         if config.sys_lan == "en-US":
             emoji_surface = font.render(lan["en"]["emoji"], True, (color_font))
         else:
-            emoji_surface = font.render(lan["ru"]["emoji"], True, (color_font))  
-        screen.blit(emoji_surface, (555, 452)) 
+            emoji_surface = font.render(lan["ru"]["emoji"], True, (color_font))
+        screen.blit(emoji_surface, (555, 452))
         screen.blit(img_emoji, (523, 450))
-        
+
     # Общие настройки
     if settings_s and settings_l == False:
         pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575), border_radius=10)
@@ -514,34 +519,21 @@ while running:
         screen.blit(ruslang_surface, (237, 98))
     # Настройки кастомизации
     if settings_c:
-        rgb_backg = font.render((str(colors.backg["r"]) + "      " + str(colors.backg["g"]) + "      " + str(colors.backg["b"])), True, (color_font))
-        screen.blit(rgb_backg, (215, 135))
-
         pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575), border_radius=10)
         # Крестик
         cross_surface = font.render("×", True, (255, 5, 5))
         screen.blit(cross_surface, (576, 12))
 
         # Панель
-        pygame.draw.rect(screen, (255, 255, 255), (211, 73, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (255, 255, 255), (211, 73, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (213, 75, 47, 26), border_radius=5)
-        pygame.draw.rect(screen, (255, 255, 255), (275, 73, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (255, 255, 255), (275, 73, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (277, 75, 47, 26), border_radius=5)
-        pygame.draw.rect(screen, (255, 255, 255), (339, 73, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (255, 255, 255), (339, 73, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (341, 75, 47, 26), border_radius=5)
         surface_rgb11 = font.render(str(colors.panel["r"]), True, (color_font))
         surface_rgb12 = font.render(str(colors.panel["g"]), True, (color_font))
         surface_rgb13 = font.render(str(colors.panel["b"]), True, (color_font))
-        surface_rgb21 = font.render(str(colors.panel["r"]), True, (color_font))
-        surface_rgb22 = font.render(str(colors.panel["g"]), True, (color_font))
-        surface_rgb23 = font.render(str(colors.panel["b"]), True, (color_font))
-        surface_rgb31 = font.render(str(colors.panel["r"]), True, (color_font))
-        surface_rgb32 = font.render(str(colors.panel["g"]), True, (color_font))
-        surface_rgb33 = font.render(str(colors.panel["b"]), True, (color_font))
-        surface_rgb41 = font.render(str(colors.panel["r"]), True, (color_font))
-        surface_rgb42 = font.render(str(colors.panel["g"]), True, (color_font))
-        surface_rgb43 = font.render(str(colors.panel["b"]), True, (color_font))
-        
         if rgb11:
             rgb11_surface = font.render(text11, True, (color_font))
             screen.blit(rgb11_surface, (215, 75))
@@ -557,52 +549,13 @@ while running:
             screen.blit(rgb13_surface, (343, 75))
         else:
             screen.blit(surface_rgb13, (343, 75))
-                
-        if rgb11:
-            rgb11_surface = font.render(text11, True, (color_font))
-            screen.blit(rgb11_surface, (215, 75))
-        if rgb12:
-            rgb12_surface = font.render(text12, True, (color_font))
-            screen.blit(rgb12_surface, (279, 75))
-        if rgb13:
-            rgb13_surface = font.render(text13, True, (color_font))
-            screen.blit(rgb13_surface, (343, 75))
 
-        if rgb21:
-            rgb21_surface = font.render(text21, True, (color_font))
-            screen.blit(rgb21_surface, (215, 135))
-        if rgb22:
-            rgb22_surface = font.render(text22, True, (color_font))
-            screen.blit(rgb22_surface, (279, 135))
-        if rgb23:
-            rgb23_surface = font.render(text23, True, (color_font))
-            screen.blit(rgb23_surface, (343, 135))
-
-        if rgb31:
-            rgb31_surface = font.render(text31, True, (color_font))
-            screen.blit(rgb31_surface, (215, 195))
-        if rgb32:
-            rgb32_surface = font.render(text32, True, (color_font))
-            screen.blit(rgb32_surface, (279, 195))
-        if rgb33:
-            rgb33_surface = font.render(text33, True, (color_font))
-            screen.blit(rgb33_surface, (343, 195))
-
-        if rgb41:
-            rgb41_surface = font.render(text41, True, (color_font))
-            screen.blit(rgb41_surface, (215, 225))
-        if rgb42:
-            rgb42_surface = font.render(text42, True, (color_font))
-            screen.blit(rgb42_surface, (279, 225))
-        if rgb43:
-            rgb43_surface = font.render(text43, True, (color_font))
-            screen.blit(rgb43_surface, (343, 225))
         # Задний фон
-        pygame.draw.rect(screen, (255, 255, 255), (211, 133, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (255, 255, 255), (211, 133, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (213, 135, 47, 26), border_radius=5)
-        pygame.draw.rect(screen, (255, 255, 255), (275, 133, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (255, 255, 255), (275, 133, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (277, 135, 47, 26), border_radius=5)
-        pygame.draw.rect(screen, (255, 255, 255), (339, 133, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (255, 255, 255), (339, 133, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (341, 135, 47, 26), border_radius=5)
         surface_rgb21 = font.render(str(colors.backg["r"]), True, (color_font))
         surface_rgb22 = font.render(str(colors.backg["g"]), True, (color_font))
@@ -623,11 +576,11 @@ while running:
         else:
             screen.blit(surface_rgb23, (343, 135))
         # Цвет окна настроек
-        pygame.draw.rect(screen, (255, 255, 255), (211, 193, 51, 30), border_radius=5)   
+        pygame.draw.rect(screen, (255, 255, 255), (211, 193, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (213, 195, 47, 26), border_radius=5)
-        pygame.draw.rect(screen, (255, 255, 255), (275, 193, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (255, 255, 255), (275, 193, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (277, 195, 47, 26), border_radius=5)
-        pygame.draw.rect(screen, (255, 255, 255), (339, 193, 51, 30), border_radius=5)   
+        pygame.draw.rect(screen, (255, 255, 255), (339, 193, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (341, 195, 47, 26), border_radius=5)
         surface_rgb31 = font.render(str(colors.sett["r"]), True, (color_font))
         surface_rgb32 = font.render(str(colors.sett["g"]), True, (color_font))
@@ -638,21 +591,21 @@ while running:
         else:
             screen.blit(surface_rgb31, (215, 195))
         if rgb32:
-            rgb22_surface = font.render(text32, True, (color_font))
+            rgb32_surface = font.render(text32, True, (color_font))
             screen.blit(rgb32_surface, (279, 195))
         else:
             screen.blit(surface_rgb32, (279, 195))
         if rgb33:
-            rgb23_surface = font.render(text33, True, (color_font))
+            rgb33_surface = font.render(text33, True, (color_font))
             screen.blit(rgb33_surface, (343, 195))
         else:
             screen.blit(surface_rgb33, (343, 195))
         # Цвет текста
-        pygame.draw.rect(screen, (255, 255, 255), (211, 253, 51, 30), border_radius=5)  
+        pygame.draw.rect(screen, (255, 255, 255), (211, 253, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (213, 255, 47, 26), border_radius=5)
-        pygame.draw.rect(screen, (255, 255, 255), (275, 253, 51, 30), border_radius=5)   
+        pygame.draw.rect(screen, (255, 255, 255), (275, 253, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (277, 255, 47, 26), border_radius=5)
-        pygame.draw.rect(screen, (255, 255, 255), (339, 253, 51, 30), border_radius=5) 
+        pygame.draw.rect(screen, (255, 255, 255), (339, 253, 51, 30), border_radius=5)
         pygame.draw.rect(screen, (70, 80, 95), (341, 255, 47, 26), border_radius=5)
         surface_rgb41 = font.render(str(colors.font["r"]), True, (color_font))
         surface_rgb42 = font.render(str(colors.font["g"]), True, (color_font))
@@ -680,7 +633,7 @@ while running:
             surface_1 = font.render(lan["ru"]["panel"], True, (color_font))
 
         pygame.draw.rect(screen, (255, 255, 255), (450, 73, 38, 28))
-        pygame.draw.rect(screen, (color_panel), (452, 75, 34 , 24))
+        pygame.draw.rect(screen, (color_panel), (452, 75, 34, 24))
         screen.blit(surface_1, (215, 45))
 
         #.текст. Цвет заднего фона
@@ -690,7 +643,7 @@ while running:
             surface_2 = font.render(lan["ru"]["backg"], True, (color_font))
 
         pygame.draw.rect(screen, (255, 255, 255), (450, 133, 38, 28))
-        pygame.draw.rect(screen, (color_backg), (452, 135, 34 , 24))
+        pygame.draw.rect(screen, (color_backg), (452, 135, 34, 24))
         screen.blit(surface_2, (215, 105))
         #.текст. Цвет настроек
         if config.sys_lan == "en-US":
@@ -699,7 +652,7 @@ while running:
             surface_2 = font.render(lan["ru"]["sett_c"], True, (color_font))
 
         pygame.draw.rect(screen, (255, 255, 255), (450, 193, 38, 28))
-        pygame.draw.rect(screen, (colors.sett["r"], colors.sett["g"], colors.sett["b"]), (452, 195, 34 , 24))
+        pygame.draw.rect(screen, (colors.sett["r"], colors.sett["g"], colors.sett["b"]), (452, 195, 34, 24))
         screen.blit(surface_2, (215, 165))
         #.текст. Цвет текста
         if config.sys_lan == "en-US":
@@ -708,7 +661,7 @@ while running:
             surface_2 = font.render(lan["ru"]["font"], True, (color_font))
 
         pygame.draw.rect(screen, (255, 255, 255), (450, 253, 38, 28))
-        pygame.draw.rect(screen, (color_font), (452, 255, 34 , 24))
+        pygame.draw.rect(screen, (color_font), (452, 255, 34, 24))
         screen.blit(surface_2, (215, 225))
 
         if config.sys_lan == "en-US":
@@ -729,20 +682,16 @@ while running:
 
 # История сообщений
     if history:
-        panel_color = (
-            colors.panel["r"],
-            colors.panel["g"],
-            colors.panel["b"]
-        )
+        panel_color = (colors.panel["r"], colors.panel["g"], colors.panel["b"])
         pygame.draw.rect(screen, panel_color, (0, 0, 800, 600))
 
         messages = network.get_messages()
 
         if not messages:
             if config.sys_lan == "en-US":
-                empty_history_surface = font.render(lan["en"]["empty_history"], True,(color_font))
+                empty_history_surface = font.render(lan["en"]["empty_history"], True, (color_font))
             else:
-                empty_history_surface = font.render(lan["ru"]["empty_history"], True,(color_font))
+                empty_history_surface = font.render(lan["ru"]["empty_history"], True, (color_font))
 
             screen.blit(empty_history_surface, (10, 10))
 
@@ -760,7 +709,7 @@ while running:
                 username = lan["en"]["inter"] if config.sys_lan == "en-US" else lan["ru"]["inter"]
 
             line_history = f"{username}: {msg['text']}    {msg.get('timestamp', '')}"
-            line_surface = font_h.render(line_history, True,(color_font))
+            line_surface = font_h.render(line_history, True, (color_font))
 
             if history_pos_y + line_height > 590:
                 history_pos_x += 300
@@ -768,18 +717,18 @@ while running:
 
             screen.blit(line_surface, (history_pos_x, history_pos_y))
             history_pos_y += line_height
- 
+
     # Панель эмодзи
     if emoji_panel:
-        pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575), border_radius=10)   
+        pygame.draw.rect(screen, (20, 20, 25), (200, 15, 400, 575), border_radius=10)
         cross_surface = font.render("×", True, (255, 5, 5))
-        screen.blit(cross_surface, (576, 12))   
+        screen.blit(cross_surface, (576, 12))
         # .текст. Эмодзи
         if config.sys_lan == "en-US":
             emoji_surface = font.render(lan["en"]["emoji"], True, (color_font))
         else:
             emoji_surface = font.render(lan["ru"]["emoji"], True, (color_font))
-        screen.blit(emoji_surface, (342, 25)) 
+        screen.blit(emoji_surface, (342, 25))
         list_emoji1 = """:smile - 😀
           :hurt - ❤️"""
         list_emoji2 = """:rofl - 🤣
@@ -798,29 +747,29 @@ while running:
                 :лайк - 👍"""
         list_emoji9 = """:диз - 👎
                :нет - 👎"""
-        list_emoji10  = ":грустный - 😕"
+        list_emoji10 = ":грустный - 😕"
 
         emoji_list_surface1 = font_e.render(list_emoji1, True, (color_font))
-        screen.blit(emoji_list_surface1, (220, 50)) 
+        screen.blit(emoji_list_surface1, (220, 50))
         emoji_list_surface2 = font_e.render(list_emoji2, True, (color_font))
-        screen.blit(emoji_list_surface2, (220, 80)) 
+        screen.blit(emoji_list_surface2, (220, 80))
         emoji_list_surface3 = font_e.render(list_emoji3, True, (color_font))
-        screen.blit(emoji_list_surface3, (220, 110)) 
+        screen.blit(emoji_list_surface3, (220, 110))
         emoji_list_surface4 = font_e.render(list_emoji4, True, (color_font))
-        screen.blit(emoji_list_surface4, (220, 140)) 
+        screen.blit(emoji_list_surface4, (220, 140))
         emoji_list_surface5 = font_e.render(list_emoji5, True, (color_font))
-        screen.blit(emoji_list_surface5, (220, 170)) 
+        screen.blit(emoji_list_surface5, (220, 170))
 
         #emoji_list_surface6 = font.render(list_emoji6, True, (color_font))
-        #screen.blit(emoji_list_surface6, (220, 230)) 
+        #screen.blit(emoji_list_surface6, (220, 230))
         #emoji_list_surface7 = font.render(list_emoji7, True, (color_font))
-        #screen.blit(emoji_list_surface7, (220, 260)) 
+        #screen.blit(emoji_list_surface7, (220, 260))
         #emoji_list_surface8 = font.render(list_emoji8, True, (color_font))
-        #screen.blit(emoji_list_surface8, (220, 290)) 
+        #screen.blit(emoji_list_surface8, (220, 290))
         #emoji_list_surface9 = font.render(list_emoji9, True, (color_font))
-        #screen.blit(emoji_list_surface9, (220, 320)) 
+        #screen.blit(emoji_list_surface9, (220, 320))
         #emoji_list_surface10 = font.render(list_emoji10, True, (color_font))
-        #screen.blit(emoji_list_surface10, (220, 350)) 
+        #screen.blit(emoji_list_surface10, (220, 350))
     pygame.display.flip()
 network.disconnect()
 pygame.quit()
