@@ -110,7 +110,7 @@ color_panel = colors.panel["r"], colors.panel["g"], colors.panel["b"]
 #font = {"r":240 ,"g":240 ,"b":240}
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-subprocess.run(["auto_config.bat"], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+subprocess.run(["auto_config.sh"], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
 
 import config
 
